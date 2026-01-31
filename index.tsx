@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 
-// --- Types & Interfaces ---
+// --- Types ---
 interface PhotoActiveAnalysis {
   initialImpression: string;
   layers: {
@@ -21,15 +21,6 @@ interface ImageData {
   base64: string;
   mimeType: string;
   previewUrl: string;
-}
-
-interface HistoryItem {
-  id: string;
-  name: string;
-  timestamp: number;
-  report: PhotoActiveAnalysis;
-  image: ImageData;
-  lang: 'he' | 'en';
 }
 
 // --- Icons ---
@@ -53,42 +44,6 @@ const LoadingIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-// --- Translations ---
-const translations = {
-  he: {
-    title: "PHOTOACTIVE",
-    subtitle: "אבחון עומק פוטואקטיב",
-    methodology: "מתודולוגיית אלדד רפאלי",
-    uploadPrompt: "גררו צילום לכאן או לחצו לבחירה",
-    analyzing: "המוח הפוטואקטיבי מנתח את השכבות...",
-    startBtn: "התחל אבחון עומק",
-    placeholder: "שם הצילום (לא חובה)",
-    quote: "״המצלמה היא רק מראה. והיא מחזירה את מה שיש בך באותו רגע.״",
-    history: "ארכיון אבחונים",
-    noHistory: "אין אבחונים קודמים",
-    openCamera: "צילום חי מהמצלמה",
-    capture: "צלם עכשיו",
-    reset: "אבחון חדש",
-    cta: "לאתר פוטואקטיב"
-  },
-  en: {
-    title: "PHOTOACTIVE",
-    subtitle: "Deep Diagnosis",
-    methodology: "Eldad Rafaeli Methodology",
-    uploadPrompt: "Drag photo here or click to select",
-    analyzing: "Analyzing diagnostic layers...",
-    startBtn: "Start Deep Diagnosis",
-    placeholder: "Photo title (optional)",
-    quote: "“The camera is only a mirror.”",
-    history: "Archive",
-    noHistory: "No history",
-    openCamera: "Live Camera",
-    capture: "Capture",
-    reset: "New Diagnosis",
-    cta: "PhotoActive Website"
-  }
-};
-
 // --- App Component ---
 const App: React.FC = () => {
   const [lang, setLang] = useState<'he' | 'en'>('he');
@@ -96,27 +51,34 @@ const App: React.FC = () => {
   const [photoName, setPhotoName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<PhotoActiveAnalysis | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  const isRtl = lang === 'he';
-  const t = translations[lang];
 
-  useEffect(() => {
-    const saved = localStorage.getItem('photoactive_history_final_v1');
-    if (saved) setHistory(JSON.parse(saved));
-  }, []);
-
-  const processFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert("אנא העלה קובץ תמונה בלבד.");
-      return;
+  const t = {
+    he: {
+      title: "PHOTOACTIVE",
+      subtitle: "אבחון עומק פוטואקטיב",
+      uploadPrompt: "גררו צילום לכאן או לחצו לבחירה",
+      analyzing: "מנתח שכבות...",
+      startBtn: "התחל אבחון",
+      reset: "אבחון חדש",
+      cta: "לאתר פוטואקטיב"
+    },
+    en: {
+      title: "PHOTOACTIVE",
+      subtitle: "Deep Diagnosis",
+      uploadPrompt: "Drag photo here or click to select",
+      analyzing: "Analyzing...",
+      startBtn: "Start Diagnosis",
+      reset: "New Diagnosis",
+      cta: "Website"
     }
+  }[lang];
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = () => {
       setSelectedImage({
@@ -129,29 +91,6 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      processFile(e.target.files[0]);
-    }
-  };
-
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const onDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.[0]) {
-      processFile(e.dataTransfer.files[0]);
-    }
-  };
-
   const startCamera = async () => {
     setIsCameraActive(true);
     try {
@@ -159,28 +98,11 @@ const App: React.FC = () => {
       if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
       console.error(err);
-      alert("לא ניתן לגשת למצלמה.");
       setIsCameraActive(false);
     }
   };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(video, 0, 0);
-      const base64 = canvas.toDataURL('image/jpeg');
-      setSelectedImage({ base64, mimeType: 'image/jpeg', previewUrl: base64 });
-      const stream = video.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      setIsCameraActive(false);
-    }
-  };
-
-  const analyze = async () => {
+  const onAnalyze = async () => {
     if (!selectedImage) return;
     setIsAnalyzing(true);
     try {
@@ -190,186 +112,98 @@ const App: React.FC = () => {
         contents: {
           parts: [
             { inlineData: { data: selectedImage.base64.split(',')[1], mimeType: selectedImage.mimeType } },
-            { text: `בצע אבחון עומק פוטואקטיבי לצילום: ${photoName || 'ללא שם'}.` }
+            { text: `בצע אבחון פוטואקטיבי לצילום: ${photoName || 'ללא שם'}. החזר JSON בערבית או עברית בהתאם לשפה.` }
           ]
         },
         config: {
-          systemInstruction: `You are Eldad Rafaeli, a legendary photographer. Diagnose using "PhotoActive" methodology. 
-          Layers: Technical, Emotional, Communication, Light, Identity. 
-          Return ONLY valid JSON in ${lang === 'he' ? 'Hebrew' : 'English'}.`,
+          systemInstruction: "You are Eldad Rafaeli, a legendary photographer. Use PhotoActive methodology. Return JSON ONLY.",
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 32768 },
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              initialImpression: { type: Type.STRING },
-              layers: {
-                type: Type.OBJECT,
-                properties: {
-                  technical: { type: Type.OBJECT, properties: { score: { type: Type.NUMBER }, pros: { type: Type.ARRAY, items: { type: Type.STRING } }, cons: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["score", "pros", "cons"] },
-                  emotional: { type: Type.OBJECT, properties: { feeling: { type: Type.STRING }, depth: { type: Type.STRING } }, required: ["feeling", "depth"] },
-                  communication: { type: Type.OBJECT, properties: { story: { type: Type.STRING }, pov: { type: Type.STRING } }, required: ["story", "pov"] },
-                  light: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, description: { type: Type.STRING } }, required: ["type", "description"] },
-                  identity: { type: Type.OBJECT, properties: { signature: { type: Type.STRING }, uniqueness: { type: Type.STRING } }, required: ["signature", "uniqueness"] }
-                },
-                required: ["technical", "emotional", "communication", "light", "identity"]
-              },
-              painProfile: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] },
-              finalFeedback: { type: Type.OBJECT, properties: { hook: { type: Type.STRING }, insight: { type: Type.STRING }, solution: { type: Type.STRING } }, required: ["hook", "insight", "solution"] }
-            },
-            required: ["initialImpression", "layers", "painProfile", "finalFeedback"]
-          }
+          thinkingConfig: { thinkingBudget: 32768 }
         }
       });
 
-      const result = JSON.parse(response.text);
-      setReport(result);
-      const item = { id: Date.now().toString(), name: photoName || "Untitled", timestamp: Date.now(), report: result, image: selectedImage, lang };
-      const updatedHistory = [item, ...history].slice(0, 10);
-      setHistory(updatedHistory);
-      localStorage.setItem('photoactive_history_final_v1', JSON.stringify(updatedHistory));
-    } catch (err) {
-      console.error(err);
-      alert("שגיאה בניתוח התמונה.");
+      setReport(JSON.parse(response.text));
+    } catch (e) {
+      console.error(e);
+      alert("שגיאה בניתוח.");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const reset = () => {
-    setSelectedImage(null);
-    setReport(null);
-    setPhotoName('');
-    setIsCameraActive(false);
-  };
-
   return (
-    <div className={`min-h-screen bg-[#050505] text-[#f8fafc] ${isRtl ? 'text-right' : 'text-left'}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      {/* Navbar */}
-      <nav className="border-b border-white/5 bg-black/50 backdrop-blur-xl sticky top-0 z-50 px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={reset}>
-          <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
-            <CameraIcon className="w-5 h-5 text-blue-400" />
-          </div>
-          <h1 className="text-xl font-black tracking-tight">{t.title}</h1>
-        </div>
-        <div className="flex bg-white/5 p-1 rounded-full border border-white/10">
-          <button onClick={() => setLang('he')} className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${lang === 'he' ? 'bg-white text-black' : 'text-slate-400'}`}>HE</button>
-          <button onClick={() => setLang('en')} className={`px-4 py-1.5 rounded-full text-[10px] font-bold ${lang === 'en' ? 'bg-white text-black' : 'text-slate-400'}`}>EN</button>
-        </div>
-      </nav>
+    <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center bg-[#050505] text-white`} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+      <header className="w-full max-w-5xl flex justify-between items-center mb-12">
+        <h1 className="text-3xl font-black tracking-tighter">{t.title}</h1>
+        <button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} className="text-xs font-bold border border-white/20 px-4 py-2 rounded-full">
+          {lang === 'he' ? 'ENGLISH' : 'עברית'}
+        </button>
+      </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Left Side: Interaction */}
-        <div className="lg:col-span-4 space-y-8">
-          <div className="glass p-8 rounded-[32px]">
-            <h2 className="text-2xl font-bold mb-3">{t.subtitle}</h2>
-            <p className="text-slate-400 text-sm">{t.methodology}</p>
-          </div>
-
+      <main className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="space-y-6">
           <div 
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onClick={() => !selectedImage && !isCameraActive && fileInputRef.current?.click()}
-            className={`group relative aspect-[4/5] rounded-[40px] overflow-hidden glass border-2 transition-all cursor-pointer flex items-center justify-center
-              ${isDragging ? 'drag-active' : 'border-white/5'} 
-              ${isAnalyzing ? 'analyzing-glow' : ''}`}
+            onClick={() => !selectedImage && fileInputRef.current?.click()}
+            className={`aspect-[4/5] glass rounded-[32px] overflow-hidden flex flex-col items-center justify-center cursor-pointer transition-all border-2 ${isAnalyzing ? 'border-blue-500 animate-pulse' : 'border-white/5 hover:border-white/20'}`}
           >
-            {isCameraActive ? (
-              <div className="absolute inset-0 bg-black flex flex-col">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                <button onClick={(e) => { e.stopPropagation(); capturePhoto(); }} className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white text-black px-10 py-4 rounded-full font-black shadow-2xl hover:scale-105 transition-transform">{t.capture}</button>
-              </div>
-            ) : selectedImage ? (
+            {selectedImage ? (
               <img src={selectedImage.previewUrl} className="w-full h-full object-cover" />
             ) : (
-              <div className="p-8 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform border border-white/10">
-                  <UploadIcon className="w-10 h-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
-                </div>
-                <p className="font-bold text-xl mb-2">{t.uploadPrompt}</p>
-                <button onClick={(e) => { e.stopPropagation(); startCamera(); }} className="mt-8 text-blue-400 text-xs font-black uppercase tracking-widest border border-blue-400/30 px-8 py-3 rounded-full hover:bg-blue-400/10 transition-all">
-                  {t.openCamera}
-                </button>
+              <div className="text-center p-8">
+                <UploadIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p className="font-bold opacity-60">{t.uploadPrompt}</p>
               </div>
             )}
-
             {isAnalyzing && (
-              <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center">
-                <LoadingIcon className="w-12 h-12 text-blue-500 mb-6" />
-                <p className="font-black text-xl tracking-tight">{t.analyzing}</p>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
+                <LoadingIcon className="w-10 h-10 mb-4" />
+                <p className="font-bold">{t.analyzing}</p>
               </div>
             )}
           </div>
-
-          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={onFileChange} />
-          <canvas ref={canvasRef} className="hidden" />
+          
+          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
           {selectedImage && !report && !isAnalyzing && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-              <input value={photoName} onChange={(e) => setPhotoName(e.target.value)} placeholder={t.placeholder} className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-lg focus:outline-none focus:border-blue-500/50 transition-all" />
-              <button onClick={analyze} className="w-full py-5 bg-white text-black rounded-2xl font-black text-xl hover:bg-blue-400 transition-all shadow-xl shadow-blue-500/10 active:scale-[0.98]">
-                {t.startBtn}
-              </button>
+            <div className="space-y-4">
+              <input value={photoName} onChange={(e) => setPhotoName(e.target.value)} placeholder="שם הצילום..." className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:outline-none focus:border-blue-500" />
+              <button onClick={onAnalyze} className="w-full py-5 bg-white text-black rounded-2xl font-black text-xl">{t.startBtn}</button>
             </div>
           )}
-
-          {/* History Section */}
-          <section className="glass p-6 rounded-[32px]">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">{t.history}</h3>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar">
-              {history.length === 0 ? <p className="text-slate-600 italic text-sm">{t.noHistory}</p> : history.map(item => (
-                <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 cursor-pointer transition-colors" onClick={() => { setReport(item.report); setSelectedImage(item.image); setPhotoName(item.name); }}>
-                  <img src={item.image.previewUrl} className="w-12 h-12 rounded-xl object-cover" />
-                  <p className="font-bold text-sm truncate">{item.name}</p>
-                </div>
-              ))}
-            </div>
-          </section>
         </div>
 
-        {/* Right Side: Results */}
-        <div className="lg:col-span-8">
+        <div className="flex flex-col">
           {!report ? (
-            <div className="h-full flex flex-col justify-center items-center p-12 glass border-dashed border-2 border-white/5 rounded-[48px] opacity-40">
-              <h2 className="text-3xl md:text-5xl font-black text-center mb-8 leading-tight max-w-2xl">{t.quote}</h2>
+            <div className="h-full glass rounded-[32px] p-12 flex items-center justify-center opacity-30 border-dashed border-2">
+              <p className="text-2xl font-bold text-center italic">"המצלמה היא רק מראה..."</p>
             </div>
           ) : (
-            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-              {/* Header Analysis */}
-              <div className="glass p-12 md:p-16 rounded-[48px] border-blue-500/20 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[120px]" />
-                <h2 className="text-4xl md:text-6xl font-black mb-10 leading-[1.1]">{report.finalFeedback.hook}</h2>
-                <p className="text-xl md:text-2xl text-slate-300 italic">“{report.initialImpression}”</p>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+              <div className="glass p-8 rounded-[32px] border-blue-500/30">
+                <h2 className="text-3xl font-black mb-4">{report.finalFeedback.hook}</h2>
+                <p className="text-xl opacity-80 leading-relaxed italic">"{report.initialImpression}"</p>
               </div>
 
-              {/* Layers Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 {Object.entries(report.layers).map(([key, layer]: [string, any]) => (
-                  <div key={key} className="glass p-10 rounded-[40px] border-white/5 hover:bg-white/[0.02] transition-colors">
-                    <h4 className="text-[10px] font-black text-blue-400 uppercase mb-4 tracking-[0.2em]">{key}</h4>
-                    <p className="text-xl font-bold">{layer.feeling || layer.type || layer.story || `${layer.score}/10`}</p>
-                    <p className="text-sm text-slate-400 mt-2 leading-relaxed">{layer.depth || layer.description || layer.pov}</p>
+                  <div key={key} className="glass p-6 rounded-2xl">
+                    <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">{key}</span>
+                    <p className="font-bold text-lg mt-1">{layer.feeling || layer.type || layer.story || `${layer.score}/10`}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Insights and CTA */}
-              <div className="glass p-12 md:p-20 rounded-[64px] border-white/10 space-y-12">
+              <div className="glass p-8 rounded-[32px] space-y-6">
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-6">INSIGHT</h4>
-                  <p className="text-2xl md:text-4xl font-medium leading-snug">{report.finalFeedback.insight}</p>
+                  <h3 className="text-xs font-black opacity-40 mb-2 uppercase">תובנה</h3>
+                  <p className="text-xl leading-snug">{report.finalFeedback.insight}</p>
                 </div>
                 <div className="h-px bg-white/5" />
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-6">SOLUTION</h4>
-                  <p className="text-2xl md:text-4xl font-medium leading-snug mb-12">{report.finalFeedback.solution}</p>
-                  <div className="flex flex-col sm:flex-row gap-6">
-                    <button onClick={() => window.open('https://photoactive.co.il/', '_blank')} className="flex-1 py-6 bg-blue-600 text-white rounded-full font-black text-xl shadow-2xl shadow-blue-500/20 hover:scale-[1.02] transition-transform">{t.cta}</button>
-                    <button onClick={reset} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-full font-black text-xl hover:bg-white/10 transition-colors">{t.reset}</button>
-                  </div>
+                  <h3 className="text-xs font-black opacity-40 mb-2 uppercase">פתרון</h3>
+                  <p className="text-xl leading-snug">{report.finalFeedback.solution}</p>
                 </div>
+                <button onClick={() => setReport(null)} className="w-full py-4 border border-white/10 rounded-xl font-bold mt-4">{t.reset}</button>
               </div>
             </div>
           )}
@@ -379,5 +213,8 @@ const App: React.FC = () => {
   );
 };
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
-root.render(<App />);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = createRoot(rootElement);
+  root.render(<App />);
+}
