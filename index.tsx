@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -32,78 +32,45 @@ const App = () => {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [hasKey, setHasKey] = useState<boolean | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRtl = lang === 'he';
-
-  const checkKeyStatus = async () => {
-    // Check both the environment variable and the helper function
-    const envKeyExists = !!process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== "";
-    
-    // @ts-ignore
-    if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
-      try {
-        // @ts-ignore
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasKey(selected || envKeyExists);
-      } catch (e) {
-        setHasKey(envKeyExists);
-      }
-    } else {
-      setHasKey(envKeyExists);
-    }
-  };
-
-  useEffect(() => {
-    checkKeyStatus();
-    // Re-check periodically in case the user sets it in the background
-    const interval = setInterval(checkKeyStatus, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleOpenKeySelector = async () => {
-    // @ts-ignore
-    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-      // @ts-ignore
-      await window.aistudio.openSelectKey();
-      // Per instructions: assume success to avoid race conditions
-      setHasKey(true);
-    }
-  };
 
   const t = {
     he: {
       title: "PHOTOACTIVE",
       subtitle: "מערכת אבחון מערכתית",
-      setupRequired: "נדרשת הגדרת מפתח API (Paid Project)",
-      setupBtn: "לחץ כאן לבחירת מפתח",
-      alreadyDone: "כבר הגדרתי, המשך לאפליקציה",
-      billingLink: "מידע על חיוב וחשבונות (Billing)",
       uploadPrompt: "העלו צילום לאבחון עומק",
       analyzing: "המוח הפוטואקטיבי מנתח שכבות...",
       startBtn: "התחל אבחון עומק",
       placeholder: "שם הצילום (לא חובה)",
       quote: "״המצלמה היא רק מראה. והיא מחזירה את מה שיש בך באותו רגע.״",
       reset: "אבחון חדש",
-      error: "חלה שגיאה. וודא שבחרת מפתח מפרויקט בתשלום (Paid) עם Billing פעיל.",
+      error: "חלה שגיאה בניתוח. וודא שהמפתח תקין ומוגדר כפרויקט בתשלום.",
+      updateKey: "עדכון הגדרות מערכת"
     },
     en: {
       title: "PHOTOACTIVE",
       subtitle: "Systemic Diagnosis System",
-      setupRequired: "API Key Setup Required (Paid Project)",
-      setupBtn: "Click to select API Key",
-      alreadyDone: "I've set the key, proceed",
-      billingLink: "Billing & Documentation",
       uploadPrompt: "Upload photo for deep diagnosis",
       analyzing: "Deconstructing systemic layers...",
       startBtn: "Start Deep Diagnosis",
       placeholder: "Photo title (optional)",
       quote: "“The camera is only a mirror. It returns what is in you at that moment.”",
       reset: "New Diagnosis",
-      error: "An error occurred. Ensure you selected a key from a Paid project.",
+      error: "Analysis error. Ensure your key is valid and from a paid project.",
+      updateKey: "Update System Key"
     }
   }[lang];
+
+  const handleOpenKeySelector = async () => {
+    // @ts-ignore
+    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+      // @ts-ignore
+      await window.aistudio.openSelectKey();
+      setErrorMessage(null); // Clear error after attempting to fix key
+    }
+  };
 
   const handleFile = (file: File) => {
     if (!file || !file.type.startsWith('image/')) return;
@@ -126,7 +93,6 @@ const App = () => {
     setErrorMessage(null);
 
     try {
-      // Always create a fresh instance
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -172,9 +138,9 @@ const App = () => {
       const result = JSON.parse(response.text || '{}');
       setReport(result);
     } catch (err: any) {
-      if (err.message?.includes("Requested entity was not found") || err.message?.includes("API key not found")) {
-        setHasKey(false);
-        setErrorMessage("המפתח לא נמצא או שאינו תקין. אנא בחר מפתח שוב.");
+      console.error(err);
+      if (err.message?.includes("entity was not found") || err.message?.includes("API key")) {
+        setErrorMessage("נדרשת הגדרת מפתח API בתשלום כדי להמשיך.");
       } else {
         setErrorMessage(err.message || t.error);
       }
@@ -182,52 +148,6 @@ const App = () => {
       setIsAnalyzing(false);
     }
   };
-
-  // While checking, show a simple loader
-  if (hasKey === null) {
-    return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
-  }
-
-  // If no key is detected, show the setup screen
-  if (hasKey === false) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 text-center animate-in fade-in duration-500" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="max-w-md w-full space-y-10 bg-white/[0.03] p-12 rounded-[48px] border border-white/10 shadow-2xl backdrop-blur-2xl">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black tracking-tighter text-white">{t.title}</h1>
-            <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.4em]">{t.subtitle}</p>
-          </div>
-          
-          <div className="space-y-4">
-            <p className="text-slate-400 text-lg font-medium">{t.setupRequired}</p>
-            <button 
-              onClick={handleOpenKeySelector}
-              className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-lg transition-all transform active:scale-95 shadow-[0_0_30px_rgba(37,99,235,0.3)]"
-            >
-              {t.setupBtn}
-            </button>
-            
-            <button 
-              onClick={() => setHasKey(true)}
-              className="w-full py-4 border border-white/10 hover:bg-white/5 text-slate-400 rounded-2xl font-bold text-sm transition-all"
-            >
-              {t.alreadyDone}
-            </button>
-
-            <div className="pt-4">
-              <a 
-                href="https://ai.google.dev/gemini-api/docs/billing" 
-                target="_blank" 
-                className="text-xs text-blue-400/50 hover:text-blue-400 transition-colors underline underline-offset-4"
-              >
-                {t.billingLink}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#050505] text-[#f8fafc] font-sans selection:bg-blue-500/30 ${isRtl ? 'text-right' : 'text-left'}`} dir={isRtl ? 'rtl' : 'ltr'}>
@@ -243,9 +163,6 @@ const App = () => {
             className="px-5 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase hover:bg-white/5 transition-all tracking-widest"
           >
             {lang === 'he' ? 'English' : 'עברית'}
-          </button>
-          <button onClick={handleOpenKeySelector} title="Change API Key" className="p-2 text-slate-500 hover:text-blue-500 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
           </button>
         </div>
       </nav>
@@ -319,8 +236,16 @@ const App = () => {
           )}
 
           {errorMessage && (
-            <div className="p-8 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-400 text-sm font-bold text-center leading-relaxed animate-in zoom-in duration-300">
-              {errorMessage}
+            <div className="space-y-4 animate-in zoom-in duration-300">
+              <div className="p-8 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-400 text-sm font-bold text-center leading-relaxed">
+                {errorMessage}
+              </div>
+              <button 
+                onClick={handleOpenKeySelector}
+                className="w-full py-4 border border-blue-500/30 text-blue-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-500/10 transition-all"
+              >
+                {t.updateKey}
+              </button>
             </div>
           )}
         </div>
@@ -379,7 +304,7 @@ const App = () => {
 
       <footer className="py-20 text-center">
         <div className="opacity-10 space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-[2em]">PhotoActive Systemic Diagnosis • System v3.1</p>
+          <p className="text-[10px] font-black uppercase tracking-[2em]">PhotoActive Systemic Diagnosis • System v4.0</p>
           <div className="flex justify-center gap-10 text-[8px] font-bold uppercase tracking-widest">
             <span className="hover:text-blue-500 transition-colors cursor-default">Confidential Analysis</span>
             <span className="hover:text-blue-500 transition-colors cursor-default">Systemic Truth</span>
