@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhotoActive | אבחון עומק</title>
+  <title>PhotoActive | אבחון עומק פרימיום</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,11 +29,15 @@
     .text-glow {
       text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
   </style>
 
-  <!-- Shim to prevent process is not defined error -->
+  <!-- Global Shim to ensure 'process' exists -->
   <script>
-    window.process = window.process || { env: {} };
+    if (typeof window.process === 'undefined') {
+      window.process = { env: {} };
+    }
   </script>
 
   <script type="importmap">
