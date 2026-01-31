@@ -1,0 +1,7 @@
+{
+  "name": "PhotoActive - אבחון צילומי",
+  "description": "מערך אבחון צילומי מקיף המבוסס על מתודולוגיית 'פוטואקטיב' של אלדד רפאלי.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
