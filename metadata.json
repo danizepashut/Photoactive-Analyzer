@@ -1,6 +1,7 @@
-
 {
   "requestFramePermissions": [
     "camera"
-  ]
+  ],
+  "name": "PhotoActive - אבחון צילומי",
+  "description": ""
 }
