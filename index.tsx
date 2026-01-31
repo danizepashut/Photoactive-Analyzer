@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 
-// --- Types ---
+// --- Interfaces ---
 interface AnalysisReport {
   initialImpression: string;
   layers: {
@@ -51,7 +51,7 @@ const XIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-// --- App Component ---
+// --- App ---
 const App = () => {
   const [lang, setLang] = useState<'he' | 'en'>('he');
   const [selectedImage, setSelectedImage] = useState<{base64: string, mimeType: string, previewUrl: string} | null>(null);
@@ -81,7 +81,7 @@ const App = () => {
       openCamera: "צילום חי",
       capture: "צלם עכשיו",
       change: "החלף צילום",
-      error: "חלה שגיאה בניתוח. וודאו שהתמונה ברורה ושהחיבור יציב."
+      error: "חלה שגיאה בחיבור או בניתוח. וודאו שהתמונה ברורה ונסו שוב."
     },
     en: {
       title: "PHOTOACTIVE",
@@ -95,7 +95,7 @@ const App = () => {
       openCamera: "Live Camera",
       capture: "Capture",
       change: "Change Photo",
-      error: "Analysis error. Please check your connection and try again."
+      error: "An error occurred. Please check your connection and try again."
     }
   }[lang];
 
@@ -123,6 +123,7 @@ const App = () => {
 
   const startCamera = async () => {
     setIsCameraActive(true);
+    setErrorMessage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) videoRef.current.srcObject = stream;
@@ -145,7 +146,6 @@ const App = () => {
       const stream = video.srcObject as MediaStream;
       if (stream) stream.getTracks().forEach(track => track.stop());
       setIsCameraActive(false);
-      setErrorMessage(null);
     }
   };
 
@@ -155,7 +155,7 @@ const App = () => {
     setErrorMessage(null);
 
     try {
-      // Accessing process.env.API_KEY directly as required by the platform instructions
+      // Use the provided API key from process.env.API_KEY
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       const response = await ai.models.generateContent({
@@ -167,7 +167,7 @@ const App = () => {
           ]
         },
         config: {
-          systemInstruction: "You are Eldad Rafaeli. Your diagnosis is sharp, profound, and uncompromising. You see beyond the frame into the photographer's psyche. Return ONLY valid JSON.",
+          systemInstruction: "You are Eldad Rafaeli. Your diagnosis is sharp, profound, and uncompromising. You see beyond the frame. Return ONLY valid JSON in Hebrew.",
           responseMimeType: "application/json",
           thinkingConfig: { thinkingBudget: 32768 },
           responseSchema: {
@@ -207,7 +207,8 @@ const App = () => {
         }
       });
 
-      const result = JSON.parse(response.text || '{}');
+      if (!response.text) throw new Error("Empty response");
+      const result = JSON.parse(response.text);
       setReport(result);
     } catch (err: any) {
       console.error("Analysis Error:", err);
@@ -235,7 +236,7 @@ const App = () => {
 
   return (
     <div className={`min-h-screen bg-[#050505] text-[#f8fafc] ${isRtl ? 'text-right' : 'text-left'}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      {/* Navbar */}
+      {/* Header */}
       <nav className="border-b border-white/5 bg-black/50 backdrop-blur-xl sticky top-0 z-50 h-20 px-8 flex items-center justify-between">
         <h1 className="text-2xl font-black tracking-tighter cursor-pointer" onClick={reset}>{t.title}</h1>
         <button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} className="px-5 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase hover:bg-white/5 transition-all">
@@ -268,7 +269,7 @@ const App = () => {
             ) : selectedImage ? (
               <div className="w-full h-full relative group">
                 <img src={selectedImage.previewUrl} className="w-full h-full object-cover" />
-                {!report && !isAnalyzing && (
+                {!isAnalyzing && (
                   <button 
                     onClick={changePhoto}
                     className="absolute top-6 left-6 bg-black/60 backdrop-blur-md text-white p-4 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 shadow-xl"
@@ -355,11 +356,6 @@ const App = () => {
                     <p className="text-5xl font-black tracking-tight mb-4">{report.painProfile.name}</p>
                     <p className="text-slate-400 text-xl italic leading-relaxed">{report.painProfile.reason}</p>
                   </div>
-                  <div className="hidden md:block w-32 h-px bg-white/10" />
-                  <div className="text-center md:text-right">
-                    <p className="text-[10px] uppercase font-black opacity-30 mb-3 tracking-[0.6em]">PhotoActive System</p>
-                    <p className="font-mono text-sm opacity-20 tracking-widest">{new Date().toLocaleDateString()}</p>
-                  </div>
                 </div>
               </div>
 
@@ -372,7 +368,7 @@ const App = () => {
                   <p className="text-4xl md:text-6xl font-medium leading-[1.1] tracking-tight text-slate-100">{report.finalFeedback.insight}</p>
                 </div>
                 
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-white/5" />
                 
                 <div className="relative">
                   <h4 className="text-[14px] font-black text-blue-400 uppercase tracking-[0.6em] mb-16">הצעה לשינוי וצמיחה</h4>
@@ -400,7 +396,7 @@ const App = () => {
   );
 };
 
-// Render
+// Start
 const rootElement = document.getElementById('root');
 if (rootElement) {
   const root = createRoot(rootElement);
