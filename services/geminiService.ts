@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PhotoActiveAnalysis, ImageData } from "../types";
 
-// Using gemini-3-pro-preview for advanced multimodal reasoning
+// Using gemini-3-pro-preview for deep multimodal reasoning
 const MODEL_NAME = 'gemini-3-pro-preview';
 
 const getSystemInstruction = (lang: 'he' | 'en') => {
@@ -27,7 +27,6 @@ Response must be in ${isHe ? 'Hebrew' : 'English'}. If Hebrew, ensure natural RT
 
 export class GeminiService {
   async analyzePhoto(image: ImageData, lang: 'he' | 'en' = 'he', photoName?: string): Promise<PhotoActiveAnalysis> {
-    // Initialize inside the call to ensure the latest process.env.API_KEY is used
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const context = photoName ? `Title of work: "${photoName}". ` : '';
@@ -46,6 +45,8 @@ export class GeminiService {
       config: {
         systemInstruction: getSystemInstruction(lang),
         responseMimeType: "application/json",
+        // Enabling high thinking budget for creative/complex reasoning tasks
+        thinkingConfig: { thinkingBudget: 32768 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
