@@ -6,13 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PhotoActive | אבחון סגנון צילומי</title>
   
-  <!-- Tailwind & Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
   
-  <!-- Babel for in-browser JSX/TSX support -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -25,8 +23,8 @@
     }
     .glass {
       background: rgba(20, 20, 20, 0.8);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 4px;
@@ -38,12 +36,9 @@
       background: #334155;
       border-radius: 10px;
     }
-    .animate-in {
-      animation: fadeIn 0.8s ease-out forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .drag-over {
+      border-color: #3b82f6 !important;
+      background: rgba(59, 130, 246, 0.05) !important;
     }
   </style>
 
