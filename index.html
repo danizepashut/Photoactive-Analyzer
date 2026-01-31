@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhotoActive | אבחון עומק פרימיום</title>
+  <title>PhotoActive | אבחון עומק פוטואקטיב</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,22 +22,25 @@
       overflow-x: hidden;
     }
     .glass {
-      background: rgba(15, 15, 15, 0.7);
-      backdrop-filter: blur(25px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(15, 15, 15, 0.75);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .text-glow {
-      text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+      text-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
     }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 3s ease-in-out infinite;
+    }
   </style>
 
-  <!-- Global Shim to ensure 'process' exists -->
   <script>
-    if (typeof window.process === 'undefined') {
-      window.process = { env: {} };
-    }
+    // Critical shim to prevent ReferenceError: process is not defined
+    window.process = { env: { API_KEY: "" } };
   </script>
 
   <script type="importmap">
