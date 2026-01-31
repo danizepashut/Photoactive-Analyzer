@@ -22,16 +22,26 @@
       overflow-x: hidden;
     }
     .glass {
-      background: rgba(15, 15, 15, 0.75);
-      backdrop-filter: blur(20px);
+      background: rgba(15, 15, 15, 0.7);
+      backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .text-glow {
-      text-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+      text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
     }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .photo-frame {
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .photo-frame:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.1);
+    }
   </style>
+
+  <script>
+    // Critical: Fix ReferenceError by defining process if it's missing
+    window.process = window.process || { env: { API_KEY: "" } };
+  </script>
 
   <script type="importmap">
 {
