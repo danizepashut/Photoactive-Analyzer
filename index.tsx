@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -81,7 +81,7 @@ const App = () => {
       openCamera: "צילום חי",
       capture: "צלם עכשיו",
       change: "החלף צילום",
-      error: "חלה שגיאה בחיבור או בניתוח. וודאו שהתמונה ברורה ונסו שוב."
+      error: "חלה שגיאה בניתוח. וודאו שהתמונה ברורה ושהחיבור יציב."
     },
     en: {
       title: "PHOTOACTIVE",
@@ -95,7 +95,7 @@ const App = () => {
       openCamera: "Live Camera",
       capture: "Capture",
       change: "Change Photo",
-      error: "An error occurred. Please check your connection and try again."
+      error: "Analysis error. Please try again."
     }
   }[lang];
 
@@ -123,7 +123,6 @@ const App = () => {
 
   const startCamera = async () => {
     setIsCameraActive(true);
-    setErrorMessage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) videoRef.current.srcObject = stream;
@@ -155,7 +154,7 @@ const App = () => {
     setErrorMessage(null);
 
     try {
-      // Use the provided API key from process.env.API_KEY
+      // Direct access to process.env.API_KEY as requested
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       const response = await ai.models.generateContent({
@@ -167,7 +166,7 @@ const App = () => {
           ]
         },
         config: {
-          systemInstruction: "You are Eldad Rafaeli. Your diagnosis is sharp, profound, and uncompromising. You see beyond the frame. Return ONLY valid JSON in Hebrew.",
+          systemInstruction: "You are Eldad Rafaeli. Your diagnosis is sharp and profound. Return ONLY valid JSON in Hebrew.",
           responseMimeType: "application/json",
           thinkingConfig: { thinkingBudget: 32768 },
           responseSchema: {
@@ -207,8 +206,7 @@ const App = () => {
         }
       });
 
-      if (!response.text) throw new Error("Empty response");
-      const result = JSON.parse(response.text);
+      const result = JSON.parse(response.text || '{}');
       setReport(result);
     } catch (err: any) {
       console.error("Analysis Error:", err);
@@ -236,7 +234,7 @@ const App = () => {
 
   return (
     <div className={`min-h-screen bg-[#050505] text-[#f8fafc] ${isRtl ? 'text-right' : 'text-left'}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      {/* Header */}
+      {/* Navbar */}
       <nav className="border-b border-white/5 bg-black/50 backdrop-blur-xl sticky top-0 z-50 h-20 px-8 flex items-center justify-between">
         <h1 className="text-2xl font-black tracking-tighter cursor-pointer" onClick={reset}>{t.title}</h1>
         <button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} className="px-5 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase hover:bg-white/5 transition-all">
@@ -368,7 +366,7 @@ const App = () => {
                   <p className="text-4xl md:text-6xl font-medium leading-[1.1] tracking-tight text-slate-100">{report.finalFeedback.insight}</p>
                 </div>
                 
-                <div className="h-px bg-white/5" />
+                <div className="h-px bg-white/10" />
                 
                 <div className="relative">
                   <h4 className="text-[14px] font-black text-blue-400 uppercase tracking-[0.6em] mb-16">הצעה לשינוי וצמיחה</h4>
@@ -389,14 +387,14 @@ const App = () => {
         </div>
       </main>
       
-      <footer className="py-32 text-center border-t border-white/5 opacity-10">
+      <footer className="py-20 text-center border-t border-white/5 opacity-10">
         <p className="text-[11px] font-black uppercase tracking-[2em]">PhotoActive • Deep Systemic Diagnosis • Eldad Rafaeli</p>
       </footer>
     </div>
   );
 };
 
-// Start
+// Render
 const rootElement = document.getElementById('root');
 if (rootElement) {
   const root = createRoot(rootElement);
