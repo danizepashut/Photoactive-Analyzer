@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
   
+  <!-- Babel for in-browser JSX parsing -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -22,9 +23,9 @@
       overflow-x: hidden;
     }
     .glass {
-      background: rgba(20, 20, 20, 0.8);
+      background: rgba(15, 15, 15, 0.7);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 4px;
@@ -36,9 +37,18 @@
       background: #334155;
       border-radius: 10px;
     }
-    .drag-over {
+    .drag-active {
       border-color: #3b82f6 !important;
-      background: rgba(59, 130, 246, 0.05) !important;
+      background-color: rgba(59, 130, 246, 0.05) !important;
+      transform: scale(1.01);
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
+    }
+    .analyzing-glow {
+      animation: pulse-glow 2s infinite;
+      border-color: rgba(59, 130, 246, 0.5) !important;
     }
   </style>
 
@@ -57,6 +67,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <!-- Load index.tsx as a Babel-parsed script to ensure all modern syntax works -->
   <script type="text/babel" data-type="module" src="./index.tsx"></script>
 </body>
 </html>
