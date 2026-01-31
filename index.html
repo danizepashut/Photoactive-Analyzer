@@ -4,41 +4,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhotoActive | אבחון סגנון צילומי</title>
+  <title>PhotoActive | אבחון עומק</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
   
-  <!-- Babel for in-browser JSX & TS parsing -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
     body {
       font-family: 'Assistant', 'Heebo', sans-serif;
       background-color: #050505;
-      color: #e2e8f0;
+      color: #f8fafc;
       margin: 0;
       overflow-x: hidden;
     }
-    #root:empty::before {
-      content: 'טוען מערכת אבחון...';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #475569;
-    }
     .glass {
       background: rgba(15, 15, 15, 0.7);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(25px);
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0a; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .text-glow {
+      text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
   </style>
+
+  <!-- Shim to prevent process is not defined error -->
+  <script>
+    window.process = window.process || { env: {} };
+  </script>
 
   <script type="importmap">
 {
@@ -55,8 +51,6 @@
 </head>
 <body>
   <div id="root"></div>
-  
-  <!-- הוספת data-presets="react,typescript" היא קריטית לפתרון השגיאה שראינו ב-Console -->
   <script type="text/babel" data-presets="react,typescript" data-type="module" src="./index.tsx"></script>
 </body>
 </html>
