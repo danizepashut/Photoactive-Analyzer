@@ -98,16 +98,15 @@ const App = () => {
     setErrorMessage(null);
 
     try {
-      // Accessing process.env.API_KEY safely
       const apiKey = process.env.API_KEY;
       if (!apiKey) {
-        throw new Error("API Key is missing from environment.");
+        throw new Error("API Key is missing from environment. Please add it to the Secrets panel.");
       }
 
       const ai = new GoogleGenAI({ apiKey });
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: {
           parts: [
             { inlineData: { data: selectedImage.base64.split(',')[1], mimeType: selectedImage.mimeType } },
@@ -117,7 +116,7 @@ const App = () => {
         config: {
           systemInstruction: "You are Eldad Rafaeli, a world-class systemic photo analyst. Your tone is professional, deep, and uncompromising. You see beyond the technical into the psychological layers of the creator. Return ONLY a valid JSON object.",
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 32768 },
+          thinkingConfig: { thinkingBudget: 0 },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -152,7 +151,7 @@ const App = () => {
       setReport(result);
     } catch (err: any) {
       console.error("Analysis Error:", err);
-      setErrorMessage(err.message.includes("API Key") ? "מפתח API חסר או לא תקין. וודא שהוא מוגדר בהגדרות הפרויקט." : t.error);
+      setErrorMessage(err.message.includes("API Key") ? "מפתח API חסר. הגדר אותו בלשונית ה-Secrets (אייקון המנעול 🔒) בשם API_KEY." : t.error);
     } finally {
       setIsAnalyzing(false);
     }
