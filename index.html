@@ -22,26 +22,16 @@
       overflow-x: hidden;
     }
     .glass {
-      background: rgba(15, 15, 15, 0.75);
+      background: rgba(15, 15, 15, 0.7);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .text-glow {
-      text-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+      text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
     }
-    @keyframes pulse-slow {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.6; }
-    }
-    .animate-pulse-slow {
-      animation: pulse-slow 3s ease-in-out infinite;
-    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
   </style>
-
-  <script>
-    // Critical shim to prevent ReferenceError: process is not defined
-    window.process = { env: { API_KEY: "" } };
-  </script>
 
   <script type="importmap">
 {
