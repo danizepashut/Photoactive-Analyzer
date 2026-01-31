@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
   
-  <!-- Babel for in-browser JSX parsing -->
+  <!-- Babel standalone for JSX transform -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -20,39 +20,27 @@
       background-color: #050505;
       color: #e2e8f0;
       margin: 0;
-      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    #root:empty::before {
+      content: 'טוען מערכת אבחון...';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #64748b;
+      font-size: 1.1rem;
     }
     .glass {
       background: rgba(15, 15, 15, 0.7);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #0a0a0a;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 10px;
-    }
-    .drag-active {
-      border-color: #3b82f6 !important;
-      background-color: rgba(59, 130, 246, 0.05) !important;
-      transform: scale(1.01);
-    }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
-      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
-    }
-    .analyzing-glow {
-      animation: pulse-glow 2s infinite;
-      border-color: rgba(59, 130, 246, 0.5) !important;
-    }
   </style>
 
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@19.0.0",
@@ -67,7 +55,13 @@
 </head>
 <body>
   <div id="root"></div>
-  <!-- Load index.tsx as a Babel-parsed script to ensure all modern syntax works -->
+  
+  <script type="text/babel" data-type="module">
+    // הזרקת הקוד ישירות לתוך ה-HTML כדי למנוע בעיות MIME-type בדפדפנים מסוימים
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    // ננסה לייבא מהקובץ החיצוני index.tsx
+  </script>
   <script type="text/babel" data-type="module" src="./index.tsx"></script>
 </body>
 </html>
